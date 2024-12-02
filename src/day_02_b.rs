@@ -10,44 +10,45 @@ fn find_safe_reports(contents: String) -> u16 {
     .map(|line| line
       .split_ascii_whitespace()
       .map(|level| utils::get_int_from_string_slice(Some(level), 0u16))
-      .collect::<Vec<u16>>()
     )
-    .map(test_report)
-    .sum()
+    .map(|report| test_report(report, None))
+    .filter(|result| *result)
+    .count() as u16
 }
 
-fn test_report(report: Vec<u16>) -> u16 {
-  for i in 0..report.len() {
-    let mut last_num: Option<u16> = None;
-    let mut ascending: Option<bool> = None;
-    let mut success = true;
-    for k in 0..report.len() {
-      if i == k {
-        continue;
+fn test_report(report: impl Iterator<Item = u16> + Clone, skipping: Option<usize>) -> bool {
+  let mut last_level: Option<u16> = None;
+  let mut ascending: Option<bool> = None;
+  let report_clone = report.clone();
+  for (i, level) in report_clone
+    .enumerate()
+    .filter(|&(i, _)| skipping.is_none() || i != skipping.unwrap())
+  {
+    if !check_order(level, last_level, ascending) || !check_distance(level, last_level) {
+      if skipping.is_none() {
+        return (0..=i).any(|j| test_report(report.clone(), Some(j)));
+        // return test_report(report.clone(), Some(i)) || test_report(report.clone(), Some(i-1));
+      } else {
+        return false;
       }
-      let level = report[k];
-
-      if let Some(last_level) = last_num {
-        if level.abs_diff(last_level) < 1 || level.abs_diff(last_level) > 3 {
-          success = false;
-          break;
-        }
-        if let Some(asc) = ascending {
-          if (level > last_level) != asc {
-            success = false;
-            break;
-          }
-        } else {
-          ascending = Some(level > last_level);
-        }
+    }
+    if ascending.is_none() {
+      if let Some(last_value) = last_level {
+        ascending = Some(level > last_value);
       }
-      last_num = Some(level);
     }
-    if success {
-      return 1;
-    }
+    last_level = Some(level);
   }
-  return 0;
+
+  return true;
+}
+
+fn check_order(level: u16, last_level: Option<u16>, ascending: Option<bool>) -> bool {
+  last_level.is_none() || ascending.is_none() || ascending.unwrap() == (level > last_level.unwrap())
+}
+
+fn check_distance(level: u16, last_level: Option<u16>) -> bool {
+  last_level.is_none() || (level.abs_diff(last_level.unwrap()) >= 1 && level.abs_diff(last_level.unwrap()) <= 3)
 }
 
 #[cfg(test)]
@@ -60,7 +61,7 @@ mod tests {
   const PART: utils::Part = utils::Part::B;
 
   #[test]
-  fn test_day_01_a() {
+  fn test_day_02_b() {
     const EXAMPLE_ANSWER: Option<u16> = Some(4);
     const ANSWER: Option<u16> = Some(455);
     match utils::run_method::<u16>(&main, DAY, PART, (EXAMPLE_ANSWER, ANSWER)) {
@@ -71,7 +72,7 @@ mod tests {
   }
 
   #[bench]
-  fn bench_day_01_a(b: &mut Bencher) {
+  fn bench_day_02_b(b: &mut Bencher) {
     let input = read_file_to_string(utils::get_file_name(DAY, None).as_str());
     b.iter(|| main(input.clone()));
   }
