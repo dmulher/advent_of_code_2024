@@ -19,8 +19,7 @@ fn find_safe_reports(contents: String) -> u16 {
 fn test_report(report: impl Iterator<Item = u16> + Clone, skipping: Option<usize>) -> bool {
   let mut last_level: Option<u16> = None;
   let mut ascending: Option<bool> = None;
-  let report_clone = report.clone();
-  for (i, level) in report_clone
+  for (i, level) in report.clone()
     .enumerate()
     .filter(|&(i, _)| !is_skipped(i, skipping))
   {
