@@ -26,8 +26,7 @@ fn test_report(report: impl Iterator<Item = u16> + Clone, skipping: Option<usize
   {
     if !check_order(level, last_level, ascending) || !check_distance(level, last_level) {
       if skipping.is_none() {
-        return (0..=i).any(|j| test_report(report.clone(), Some(j)));
-        // return test_report(report.clone(), Some(i)) || test_report(report.clone(), Some(i-1));
+        return ((i.max(2)-2)..=i).any(|j| test_report(report.clone(), Some(j)));
       } else {
         return false;
       }
