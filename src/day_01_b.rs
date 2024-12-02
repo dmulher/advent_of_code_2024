@@ -7,17 +7,22 @@ pub fn main(contents: String) -> u32 {
 }
 
 fn get_similarity(contents: String) -> u32 {
-  let mut left: HashMap<u32, u32> = HashMap::new();
-  let mut right: HashMap<u32, u32> = HashMap::new();
+  let mut vals: HashMap<u32, (u32, u32)> = HashMap::new();
   for line in contents.lines() {
-    let mut split_line = line.split_ascii_whitespace();
-    *left.entry(utils::get_int_from_string_slice(split_line.next(), 0u32)).or_insert(0) += 1;
-    *right.entry(utils::get_int_from_string_slice(split_line.next(), 0u32)).or_insert(0) += 1;
+    let tuple = to_u32_tuple(line);
+    vals.entry(tuple.0).or_insert((0, 0)).0 += 1;
+    vals.entry(tuple.1).or_insert((0, 0)).1 += 1;
+    // *right.entry(utils::get_int_from_string_slice(split_line.next(), 0u32)).or_insert(0) += 1;
   }
 
-  left.keys().into_iter().map(|num| {
-    *num * left.get(num).unwrap_or(&0u32) * right.get(num).unwrap_or(&0u32)
+  vals.keys().into_iter().map(|num| {
+    *num * vals[num].0 * vals[num].1
   }).sum()
+}
+
+fn to_u32_tuple(line: &str) -> (u32, u32) {
+  let mut split_line = line.split_ascii_whitespace();
+  (utils::get_int_from_string_slice(split_line.next(), 0u32), utils::get_int_from_string_slice(split_line.next(), 0u32))
 }
 
 #[cfg(test)]
