@@ -22,7 +22,7 @@ fn test_report(report: impl Iterator<Item = u16> + Clone, skipping: Option<usize
   let report_clone = report.clone();
   for (i, level) in report_clone
     .enumerate()
-    .filter(|&(i, _)| skipping.is_none() || i != skipping.unwrap())
+    .filter(|&(i, _)| !is_skipped(i, skipping))
   {
     if !check_order(level, last_level, ascending) || !check_distance(level, last_level) {
       if skipping.is_none() {
@@ -43,11 +43,24 @@ fn test_report(report: impl Iterator<Item = u16> + Clone, skipping: Option<usize
 }
 
 fn check_order(level: u16, last_level: Option<u16>, ascending: Option<bool>) -> bool {
-  last_level.is_none() || ascending.is_none() || ascending.unwrap() == (level > last_level.unwrap())
+  match (last_level, ascending) {
+    (Some(last_val), Some(asc)) => asc == (level > last_val),
+    _ => true
+  }
 }
 
 fn check_distance(level: u16, last_level: Option<u16>) -> bool {
-  last_level.is_none() || (level.abs_diff(last_level.unwrap()) >= 1 && level.abs_diff(last_level.unwrap()) <= 3)
+  match last_level {
+    Some(last_val) => level.abs_diff(last_val) >= 1 && level.abs_diff(last_val) <= 3,
+    _ => true
+  }
+}
+
+fn is_skipped(i: usize, skipping: Option<usize>) -> bool {
+  match skipping {
+    Some(skipped_idx) => skipped_idx == i,
+    _ => false
+  }
 }
 
 #[cfg(test)]

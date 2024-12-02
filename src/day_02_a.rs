@@ -34,11 +34,17 @@ fn test_report(report: impl Iterator<Item = u16>) -> bool {
 }
 
 fn check_order(level: u16, last_level: Option<u16>, ascending: Option<bool>) -> bool {
-  last_level.is_none() || ascending.is_none() || ascending.unwrap() == (level > last_level.unwrap())
+  match (last_level, ascending) {
+    (Some(last_val), Some(asc)) => asc == (level > last_val),
+    _ => true
+  }
 }
 
 fn check_distance(level: u16, last_level: Option<u16>) -> bool {
-  last_level.is_none() || (level.abs_diff(last_level.unwrap()) >= 1 && level.abs_diff(last_level.unwrap()) <= 3)
+  match last_level {
+    Some(last_val) => level.abs_diff(last_val) >= 1 && level.abs_diff(last_val) <= 3,
+    _ => true
+  }
 }
 
 #[cfg(test)]
