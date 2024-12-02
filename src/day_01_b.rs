@@ -12,7 +12,6 @@ fn get_similarity(contents: String) -> u32 {
     let tuple = to_u32_tuple(line);
     vals.entry(tuple.0).or_insert((0, 0)).0 += 1;
     vals.entry(tuple.1).or_insert((0, 0)).1 += 1;
-    // *right.entry(utils::get_int_from_string_slice(split_line.next(), 0u32)).or_insert(0) += 1;
   }
 
   vals.keys().into_iter().map(|num| {
