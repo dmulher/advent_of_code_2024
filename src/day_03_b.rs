@@ -38,23 +38,23 @@ fn add_instructions(contents: String) -> u32 {
         ans += first_num.parse::<u32>().unwrap_or(0) * second_num.parse::<u32>().unwrap_or(0);
         context = None;
         first_num = "".to_string();
-        second_num = "".to_string()
+        second_num = "".to_string();
       },
       (true, _, 'd') | (true, Some('d'), 'o') | (true, Some('o'), 'n') | (true, Some('n'), '\'') | (true, Some('\''), 't') | (true, Some('t'), '(') => {
         is_donting = true;
         context = Some(char);
         first_num = "".to_string();
-        second_num = "".to_string()
+        second_num = "".to_string();
       },
       _ => {
         is_donting = false;
         context = None;
         first_num = "".to_string();
-        second_num = "".to_string()
+        second_num = "".to_string();
       }
     }
   }
-  return ans;
+  ans
 }
 
 #[cfg(test)]
