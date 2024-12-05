@@ -14,7 +14,7 @@ fn add_instructions(contents: String) -> u32 {
         'M' => b'M',
         'A' => b'A',
         'S' => b'S',
-        _ => b'N',
+        _ => 0,
       })
       .collect::<Vec<u8>>()
     )
