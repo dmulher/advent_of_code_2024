@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::{cmp::Ordering, collections::HashMap};
 
 extern crate test;
 
@@ -6,7 +6,7 @@ pub fn main(contents: String) -> u32 {
   get_instructions(contents)
 }
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Debug)]
 struct Rule {
   requirements: Vec<u16>,
   futures: Vec<u16>,
@@ -19,46 +19,42 @@ impl Rule {
 }
 
 fn get_instructions(contents: String) -> u32 {
-  let mut ans = 0u32;
+  let (rules_str, updates_str) = contents.split_once("\n\n").unwrap();
 
-  let mut rules: HashMap<u16, Rule> = HashMap::new();
-  let mut acquiring_rules = true;
+  let rules = rules_str
+    .lines()
+    .map(|line| line.split_once('|').unwrap())
+    .map(|(left, right)| (left.parse::<u16>().unwrap(), right.parse::<u16>().unwrap()))
+    .fold(HashMap::<u16, Rule>::new(), |mut acc, (left, right)| {
+      acc.entry(left).or_insert(Rule::new()).futures.push(right);
+      acc.entry(right).or_insert(Rule::new()).requirements.push(left);
+      acc
+    });
 
-  for line in contents.lines() {
-    if line == "" {
-      acquiring_rules = false;
-      println!("{:?}", rules);
-    } else if acquiring_rules {
-      if let Some((left, right)) = line.split_once('|') {
-        let left_num = left.parse::<u16>().unwrap();
-        let right_num = right.parse::<u16>().unwrap();
-        rules.entry(left_num).or_insert(Rule::new()).futures.push(right_num);
-        rules.entry(right_num).or_insert(Rule::new()).requirements.push(left_num);
+  updates_str
+    .lines()
+    .map(|update| {
+      let commands = update.split(",").map(|command| command.parse::<u16>().unwrap()).enumerate().collect::<Vec<(usize, u16)>>();
+      if commands.is_sorted_by(|a, b| compare_fn(a, b, &rules) == Ordering::Less) {
+        commands[commands.len()/2].1 as u32
+      } else {
+        0
       }
-    } else {
-      ans += check_update(line, &rules);
-    }
-  }
-
-  ans
+    })
+    .sum()
 }
 
-fn check_update(line: &str, rules: &HashMap<u16, Rule>) -> u32 {
-  println!("Checking {}", line);
-  let update = line.split(',').map(|u| u.parse::<u16>().unwrap()).collect::<Vec<u16>>();
-  let mut requirements = HashSet::<u16>::new();
-  let mut specials = HashSet::<u16>::new();
-  for u in update.iter().rev() {
-    if let Some(rule) = rules.get(u) {
-      specials.insert(*u);
-      requirements.extend(rule.requirements.iter());
-      requirements.remove(u);
+fn compare_fn(a: &(usize, u16), b: &(usize, u16), rules: &HashMap<u16, Rule>) -> Ordering {
+  if let Some(rule) = rules.get(&a.1) {
+    if rule.requirements.contains(&b.1) {
+      Ordering::Greater
+    } else if rule.futures.contains(&b.1) {
+      Ordering::Less
+    } else {
+      a.0.cmp(&b.0)
     }
-  }
-  if requirements.iter().any(|req| specials.contains(req)) {
-    0
   } else {
-    update[update.len() / 2] as u32
+    Ordering::Equal
   }
 }
 
