@@ -62,11 +62,11 @@ mod tests {
   use test::Bencher;
   use utils::read_file_to_string;
 
-  const DAY: u8 = 7;
+  const DAY: u8 = 8;
   const PART: utils::Part = utils::Part::B;
 
   #[test]
-  fn test_day_07_b() {
+  fn test_day_08_b() {
     const EXAMPLE_ANSWER: Option<u16> = Some(34);
     const ANSWER: Option<u16> = Some(951);
     match utils::run_method::<u16>(&main, DAY, PART, (EXAMPLE_ANSWER, ANSWER)) {
@@ -77,7 +77,7 @@ mod tests {
   }
 
   #[bench]
-  fn bench_day_07_b(b: &mut Bencher) {
+  fn bench_day_08_b(b: &mut Bencher) {
     let input = read_file_to_string(utils::get_file_name(DAY, None).as_str());
     b.iter(|| main(input.clone()));
   }
