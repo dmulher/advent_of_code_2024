@@ -1,15 +1,18 @@
+use std::cmp::Ordering;
+
 extern crate test;
 
 pub fn main(contents: String) -> u64 {
   get_instructions(contents)
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 enum Operation {
   ADD,
   MULT,
 }
 
+#[derive(Debug)]
 struct Instruction {
   answer: u64,
   numbers: Vec<u64>,
@@ -22,52 +25,49 @@ fn get_instructions(contents: String) -> u64 {
       let mut parts = line.split_ascii_whitespace();
       let answer_part = parts.next().unwrap();
       let answer = answer_part[0..answer_part.len()-1].parse::<u64>().unwrap();
-      let numbers: Vec<u64> = parts.map(|p| p.parse::<u64>().unwrap()).collect::<Vec<u64>>();
+      let numbers: Vec<u64> = parts.map(|p| p.parse::<u64>().unwrap()).rev().collect::<Vec<u64>>();
       Instruction { answer, numbers }
     })
-    .filter(is_instruction_correct)
+    .filter(|instruction| is_instruction_correct(instruction.numbers.clone(), instruction.answer, 0, Operation::ADD) == Ordering::Equal)
     .map(|instruction| instruction.answer)
     .sum()
 }
 
-fn is_instruction_correct(instruction: &Instruction) -> bool {
-  let mut operations: Vec<Operation> = vec![Operation::ADD; instruction.numbers.len() - 1];
-  for _ in 0..2usize.pow(instruction.numbers.len() as u32 - 1) {
-    let mut check_answer = 0u64;
-    instruction.numbers.iter().enumerate().for_each(|(idx, e)| {
-      if idx == 0 {
-        check_answer = *e;
-      } else {
-        match operations[idx - 1] {
-          Operation::ADD => check_answer += *e,
-          Operation::MULT => check_answer *= *e,
-        }
-      }
-    });
-    if check_answer == instruction.answer {
-      return true;
-    }
-    operations = get_next_operations(operations);
+fn is_instruction_correct(mut numbers: Vec<u64>, answer: u64, total: u64, operation: Operation) -> Ordering {
+  let val = apply_operator(total, numbers.pop().unwrap(), operation);
+
+  if numbers.len() == 0 {
+    return val.cmp(&answer);
+  } else if val > answer {
+    return Ordering::Greater;
   }
 
-  return false;
+  check_next_step(numbers, answer, val, Operation::MULT)
 }
 
-fn get_next_operations(operations: Vec<Operation>) -> Vec<Operation> {
-  let mut new_operations: Vec<Operation> = vec![];
-  let mut carrying = true;
-  operations.into_iter().rev().for_each(|op| {
-    new_operations.push(match (carrying, op) {
-      (true, Operation::ADD) => {
-        carrying = false;
-        Operation::MULT
+fn check_next_step(numbers: Vec<u64>, answer: u64, total: u64, operation: Operation) -> Ordering {
+  let result = is_instruction_correct(numbers.clone(), answer, total, operation);
+  match (result, operation) {
+    (Ordering::Less, Operation::MULT) if numbers.contains(&1) || total == 1 => {
+      check_next_step(numbers.clone(), answer, total, Operation::ADD)
+    },
+    (Ordering::Greater, Operation::MULT) => {
+      match check_next_step(numbers.clone(), answer, total, Operation::ADD) {
+        Ordering::Less => Ordering::Greater,
+        ord => ord,
       }
-      (true, Operation::MULT) => Operation::ADD,
-      (false, op) => op,
-    });
-  });
-  new_operations.reverse();
-  new_operations
+    },
+    (ord, _) => {
+      ord
+    }
+  }
+}
+
+fn apply_operator(total: u64, new_num: u64, operation: Operation) -> u64 {
+  match operation {
+    Operation::ADD => total + new_num,
+    Operation::MULT => total * new_num,
+  }
 }
 
 #[cfg(test)]

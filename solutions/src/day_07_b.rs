@@ -1,14 +1,22 @@
+use std::cmp::Ordering;
+
 extern crate test;
 
 pub fn main(contents: String) -> u64 {
   get_instructions(contents)
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 enum Operation {
   ADD,
   MULT,
   MERGE,
+}
+
+#[derive(Debug)]
+struct Instruction {
+  answer: u64,
+  numbers: Vec<u64>,
 }
 
 fn get_instructions(contents: String) -> u64 {
@@ -18,58 +26,56 @@ fn get_instructions(contents: String) -> u64 {
       let mut parts = line.split_ascii_whitespace();
       let answer_part = parts.next().unwrap();
       let answer = answer_part[0..answer_part.len()-1].parse::<u64>().unwrap();
-      let eq = parts.map(|p| p.parse::<u64>().unwrap()).collect::<Vec<u64>>();
-      // let highest = eq.clone().into_iter().reduce(|acc, e| if e == 1 {merge_numbers(acc, e)} else {merge_numbers(acc, e)}).unwrap();
-      // let lowest = eq.clone().into_iter().reduce(|acc, e| if e == 1 {acc * e} else {acc + e}).unwrap();
-      // if answer > highest || answer < lowest {
-      //   return 0;
-      // } else if answer == highest || answer == lowest {
-      //   return answer;
-      // }
-      let mut operations: Vec<Operation> = vec![Operation::ADD; eq.len() - 1];
-      for _ in 0..3usize.pow(eq.len() as u32) {
-        let mut check_answer = 0u64;
-        eq.iter().enumerate().for_each(|(idx, e)| {
-          if idx == 0 {
-            check_answer = *e;
-          } else {
-            match operations[idx - 1] {
-              Operation::ADD => check_answer += *e,
-              Operation::MULT => check_answer *= *e,
-              Operation::MERGE => check_answer = merge_numbers(check_answer, *e),
-            }
-          }
-        });
-        if check_answer == answer {
-          return answer;
-        }
-        operations = get_next_operations(operations);
-      }
-
-      return 0;
+      let numbers: Vec<u64> = parts.map(|p| p.parse::<u64>().unwrap()).rev().collect::<Vec<u64>>();
+      Instruction { answer, numbers }
     })
+    .filter(|instruction| is_instruction_correct(instruction.numbers.clone(), instruction.answer, 0, Operation::ADD) == Ordering::Equal)
+    .map(|instruction| instruction.answer)
     .sum()
 }
 
-fn get_next_operations(operations: Vec<Operation>) -> Vec<Operation> {
-  let mut new_operations: Vec<Operation> = vec![];
-  let mut carrying = true;
-  operations.into_iter().rev().for_each(|op| {
-    new_operations.push(match (carrying, op) {
-      (true, Operation::ADD) => {
-        carrying = false;
-        Operation::MULT
+fn is_instruction_correct(mut numbers: Vec<u64>, answer: u64, total: u64, operation: Operation) -> Ordering {
+  let val = apply_operator(total, numbers.pop().unwrap(), operation);
+
+  if numbers.len() == 0 {
+    return val.cmp(&answer);
+  } else if val > answer {
+    return Ordering::Greater;
+  }
+
+  check_next_step(numbers.clone(), answer, val, Operation::MERGE)
+}
+
+fn check_next_step(numbers: Vec<u64>, answer: u64, total: u64, operation: Operation) -> Ordering {
+  let result = is_instruction_correct(numbers.clone(), answer, total, operation);
+  match (result, operation) {
+    (Ordering::Less, Operation::MULT) if numbers.contains(&1) || total == 1 => {
+      check_next_step(numbers.clone(), answer, total, Operation::ADD)
+    },
+    (Ordering::Greater, Operation::MERGE) => {
+      match check_next_step(numbers.clone(), answer, total, Operation::MULT) {
+        Ordering::Less => Ordering::Greater,
+        ord => ord,
       }
-      (true, Operation::MULT) => {
-        carrying = true;
-        Operation::MERGE
-      },
-      (true, Operation::MERGE) => Operation::ADD,
-      (false, op) => op,
-    });
-  });
-  new_operations.reverse();
-  new_operations
+    },
+    (Ordering::Greater, Operation::MULT) => {
+      match check_next_step(numbers.clone(), answer, total, Operation::ADD) {
+        Ordering::Less => Ordering::Greater,
+        ord => ord,
+      }
+    },
+    (ord, _) => {
+      ord
+    }
+  }
+}
+
+fn apply_operator(total: u64, new_num: u64, operation: Operation) -> u64 {
+  match operation {
+    Operation::ADD => total + new_num,
+    Operation::MULT => total * new_num,
+    Operation::MERGE => merge_numbers(total, new_num),
+  }
 }
 
 fn merge_numbers(a: u64, b: u64) -> u64 {
