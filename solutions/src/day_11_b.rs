@@ -7,6 +7,8 @@ pub fn main(contents: String) -> u64 {
 }
 
 fn find_trailheads(contents: String) -> u64 {
+  // TODO: Consider going down and mapping every possible blinks for every number
+  //  This would use a stack/vec of previous numbers in lineage
   let mut memo: HashMap<(u64, u16), u64> = HashMap::new();
   contents
     .split_ascii_whitespace()

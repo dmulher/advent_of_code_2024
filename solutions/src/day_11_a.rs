@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 extern crate test;
 
 pub fn main(contents: String) -> u64 {
@@ -5,24 +7,31 @@ pub fn main(contents: String) -> u64 {
 }
 
 fn find_trailheads(contents: String) -> u64 {
+  let mut memo: HashMap<(u64, u16), u64> = HashMap::new();
   contents
     .split_ascii_whitespace()
-    .map(|s| blink(s.parse::<u64>().unwrap(), 0))
+    .map(|s| blink(s.parse::<u64>().unwrap(), 0, &mut memo))
     .sum::<u64>() as u64
 }
 
-fn blink(stone_val: u64, total_blinks: u8) -> u64 {
-  if total_blinks == 25 {
+fn blink(stone_val: u64, total_blinks: u16, memo: &mut HashMap<(u64, u16), u64>) -> u64 {
+  if let Some(val) = memo.get(&(stone_val, total_blinks)) {
+    *val
+  } else if total_blinks == 25 {
     1
   } else if stone_val == 0 {
-    blink(1, total_blinks+1)
+    let val = blink(1, total_blinks+1, memo);
+    memo.insert((stone_val, total_blinks), val);
+    val
   } else {
     let num_str = stone_val.to_string();
-    if num_str.len() % 2 == 0 {
-      blink(num_str[0..num_str.len()/2].parse::<u64>().unwrap(), total_blinks + 1) + blink(num_str[num_str.len()/2..num_str.len()].parse::<u64>().unwrap(), total_blinks + 1)
+    let val = if num_str.len() % 2 == 0 {
+      blink(num_str[0..num_str.len()/2].parse::<u64>().unwrap(), total_blinks + 1, memo) + blink(num_str[num_str.len()/2..num_str.len()].parse::<u64>().unwrap(), total_blinks + 1, memo)
     } else {
-      blink(stone_val * 2024, total_blinks + 1)
-    }
+      blink(stone_val * 2024, total_blinks + 1, memo)
+    };
+    memo.insert((stone_val, total_blinks), val);
+    val
   }
 }
 
