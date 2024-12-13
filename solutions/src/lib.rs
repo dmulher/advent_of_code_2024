@@ -1,4 +1,5 @@
 #![feature(test)]
+#![feature(iter_array_chunks)]
 
 mod day_01_a;
 mod day_01_b;
@@ -25,8 +26,8 @@ mod day_11_a;
 mod day_11_b;
 mod day_12_a;
 mod day_12_b;
-// mod day_13_a;
-// mod day_13_b;
+mod day_13_a;
+mod day_13_b;
 // mod day_14_a;
 // mod day_14_b;
 // mod day_15_a;
@@ -77,8 +78,8 @@ pub fn run_all_days() {
     day_11_b::main("".to_string());
     day_12_a::main("".to_string());
     day_12_b::main("".to_string());
-    // day_13_a::main("".to_string());
-    // day_13_b::main("".to_string());
+    day_13_a::main("".to_string());
+    day_13_b::main("".to_string());
     // day_14_a::main("".to_string());
     // day_14_b::main("".to_string());
     // day_15_a::main("".to_string());
