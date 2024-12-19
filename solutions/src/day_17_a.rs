@@ -54,14 +54,6 @@ fn get_combo(operand: u8, a: u32, b: u32, c: u32) -> u32 {
   }
 }
 
-fn split_num(num: u32) -> Vec<char> {
-  if num < 10 {
-    vec![char::from_digit(num, 10).unwrap()]
-  } else {
-    num.to_string().chars().collect::<Vec<char>>()
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -73,11 +65,11 @@ mod tests {
 
   #[test]
   fn test_day_17_a() {
-    let EXAMPLE_ANSWER: Option<String> = Some(String::from("4,6,3,5,6,3,5,2,1,0"));
-    let ANSWER: Option<String> = Some(String::from("7,5,4,3,4,5,3,4,6"));
-    match utils::run_method::<String>(&main, DAY, PART, (EXAMPLE_ANSWER, ANSWER.clone())) {
+    let example_answer: Option<String> = Some(String::from("4,6,3,5,6,3,5,2,1,0"));
+    let answer: Option<String> = Some(String::from("7,5,4,3,4,5,3,4,6"));
+    match utils::run_method::<String>(&main, DAY, PART, (example_answer, answer.clone())) {
       Err(message) => panic!("{}", message),
-      Ok(val) if ANSWER.is_none() => println!("Answer for day {DAY}-{} = {val}", PART.lower_name()),
+      Ok(val) if answer.is_none() => println!("Answer for day {DAY}-{} = {val}", PART.lower_name()),
       _ => (),
     }
   }
