@@ -7,6 +7,8 @@ pub fn main(contents: String) -> String {
 }
 
 fn do_thing(contents: String) -> String {
+  // I have a theory you could do a wall search to see if a wall goes from top/right to bottom/left
+  //  but that sounds like the same amount of work, just with the logic flipped
   let size: usize = if contents.lines().count() == 25 { 7 } else { 71 };
   let mut map = vec![vec![false; size]; size];
   for coord in contents.lines() {
